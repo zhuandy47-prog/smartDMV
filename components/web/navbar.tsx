@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { UserMenu } from "@/components/web/user-menu";
+import { StaggerButton } from "../ui/stagger-button";
 
 
 export function Navbar() {
@@ -58,19 +59,28 @@ export function Navbar() {
             href="/bankstatement"
             className={isActive("/bankstatement") ? "active" : ""}
           >
-            Bank statement
+            <StaggerButton staggerDelay={0.03} duration={0.15}>
+               Bank statement
+            </StaggerButton>
+           
           </Link>
           <Link
             href="/lease-agreement"
             className={isActive("/lease-agreement") ? "active" : ""}
           >
-            Lease agreement
+            <StaggerButton staggerDelay={0.03} duration={0.15}>
+              Lease agreement
+            </StaggerButton>
+            
           </Link>
           <Link
             href="/utility-bill"
             className={isActive("/utility-bill") ? "active" : ""}
           >
-            Utility bill
+            <StaggerButton staggerDelay={0.03} duration={0.15}>
+               Utility bill
+            </StaggerButton>
+           
           </Link>
         
           {isStaff && (
@@ -85,7 +95,10 @@ export function Navbar() {
                     : ""
                 }`}
               >
-                Review queue
+                <StaggerButton staggerDelay={0.03} duration={0.15}>
+              Review queue
+            </StaggerButton>
+                
                 {staffUnreadLabel && (
                   <span
                     className="nav-pill"
@@ -99,13 +112,19 @@ export function Navbar() {
                 href="/dashboard/audit"
                 className={`staff ${isActive("/dashboard/audit") ? "active" : ""}`}
               >
-                Audit
+                <StaggerButton>
+              Audit
+            </StaggerButton>
+                
               </Link>
               <Link
                 href="/dashboard/staff"
                 className={`staff ${isActive("/dashboard/staff") ? "active" : ""}`}
               >
-                Users
+                <StaggerButton>
+              Users
+            </StaggerButton>
+                
               </Link>
             </>
           )}
@@ -118,7 +137,10 @@ export function Navbar() {
         ) : (
           <>
             <Link href="/auth/login" className="btn-link">
+            <StaggerButton>
               Sign in
+            </StaggerButton>
+              
             </Link>
             <Link
               href="/auth/sign-up"
@@ -129,7 +151,10 @@ export function Navbar() {
                 borderColor: "#fff",
               }}
             >
-              Get started
+              <StaggerButton staggerDelay={0.03} duration={0.15}>
+                Get started
+              </StaggerButton>
+              
             </Link>
           </>
         )}

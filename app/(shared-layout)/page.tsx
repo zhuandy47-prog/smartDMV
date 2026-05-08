@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { FlippingCard } from "@/components/ui/flipping-card";
+import { StaggerButton } from "@/components/ui/stagger-button";
 
 export default function Home() {
   const { isAuthenticated } = useConvexAuth();
@@ -47,7 +48,7 @@ export default function Home() {
         <div className="lp-hero-inner">
           <div className="lp-hero-text">
             <div className="lp-eyebrow">
-              Document verification · built for serious work
+             Automated address verification for DMV applications
             </div>
             <h1 className="lp-h1">
               Approve documents
@@ -62,19 +63,25 @@ export default function Home() {
               hands your team a decision-ready review.
             </p>
             <div className="lp-cta">
-              <Link href={primaryHref} className="btn btn-lg" style={primaryBtnStyle}>
-                {primaryLabel} <ArrowRight />
+              <Link href={primaryHref} className="btn" style={primaryBtnStyle}>
+              <StaggerButton staggerDelay={0.025} duration={0.14} className="text-black">
+                {primaryLabel}
+              </StaggerButton>
+                 <ArrowRight />
               </Link>
-              <button
-                className="btn-link"
+              <StaggerButton
+                staggerDelay={0.025} duration={0.14} 
                 onClick={() =>
                   document
                     .getElementById("lp-how")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
               >
-                See how it works →
-              </button>
+                
+                  See how it works →
+                
+                
+              </StaggerButton>
             </div>
             <div className="lp-trust">
               <span>
@@ -316,8 +323,11 @@ export default function Home() {
           <h2>Stop re-reading PDFs.</h2>
           <p>Upload your first document free. No card. No setup.</p>
           <div className="lp-cta">
-            <Link href={primaryHref} className="btn btn-lg" style={primaryBtnStyle}>
-              {primaryLabel} <ArrowRight />
+            <Link href={primaryHref} className="btn" style={primaryBtnStyle}>
+            <StaggerButton staggerDelay={0.025} duration={0.14} className="text-black text-xl">
+              {primaryLabel}
+            </StaggerButton>
+               <ArrowRight />
             </Link>
             
           </div>
@@ -331,14 +341,11 @@ export default function Home() {
             <span className="brand-mark">
               Smart<span className="accent">DMV</span>
             </span>
-            <span>© 2026 SmartDMV</span>
+            <span>Copyright© 2026 SmartDMV</span>
           </div>
           <div className="lp-footer-links">
-            <a>Product</a>
-            <a>Pricing</a>
-            <a>Security</a>
-            <a>Docs</a>
-            <a>Contact</a>
+            <a href="/privacy-policy">Privacy Policy</a>
+            <a href="/terms-of-use">Terms of Use</a>
           </div>
         </div>
       </footer>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/web/theme-provider";
 import { ConvexClientProvider } from "@/components/web/ConvexClientProvider";
 import { AuthEffects } from "@/components/web/AuthEffects";
 import { Toaster } from "@/components/ui/sonner";
@@ -41,22 +40,13 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        {/* The design is light-first; we keep ThemeProvider mounted so the
-            existing ModeToggle component still works, but the palette in
-            globals.css doesn't define a dark variant. */}
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          forcedTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
+        
           <ConvexClientProvider>
             <AuthEffects />
             {children}
           </ConvexClientProvider>
           <Toaster closeButton />
-        </ThemeProvider>
+     
       </body>
     </html>
   );
