@@ -147,14 +147,18 @@ export function Navbar() {
               className="btn btn-sm"
               style={{
                 background: "#fff",
-                color: "var(--ink-7)",
+                color: "#000",
                 borderColor: "#fff",
               }}
             >
-              <StaggerButton staggerDelay={0.03} duration={0.15}>
+              <StaggerButton
+                staggerDelay={0.03}
+                duration={0.15}
+                className="bg-white text-black hover:bg-white"
+              >
                 Get started
               </StaggerButton>
-              
+
             </Link>
           </>
         )}
