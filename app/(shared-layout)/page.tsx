@@ -40,6 +40,26 @@ export default function Home() {
       ? "Open the review queue"
       : "Upload a document";
 
+  /* "Open the review queue" (staff) gets a transparent / ghost-outlined
+     style instead of the white CTA — white-on-dark would scream too loud
+     for an already-signed-in staff user. Non-staff still get the bold
+     white CTA. The inner StaggerButton text color flips to match: white
+     when the button is transparent, black when the button is white. */
+  const primaryBtnStyle: React.CSSProperties = isStaff
+    ? {
+        background: "transparent",
+        color: "#fff",
+        borderColor: "rgba(255, 255, 255, 0.35)",
+      }
+    : {
+        background: "#fff",
+        color: "var(--ink-7)",
+        borderColor: "#fff",
+      };
+  const primaryBtnTextClass = isStaff
+    ? "text-white"
+    : "bg-white text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white";
+
   return (
     <div className="view">
       {/* ============ HERO ============ */}
@@ -64,7 +84,7 @@ export default function Home() {
             </p>
             <div className="lp-cta">
               <Link href={primaryHref} className="btn" style={primaryBtnStyle}>
-              <StaggerButton staggerDelay={0.025} duration={0.14} className="text-black">
+              <StaggerButton staggerDelay={0.025} duration={0.14} className={primaryBtnTextClass}>
                 {primaryLabel}
               </StaggerButton>
                  <ArrowRight />
@@ -324,7 +344,7 @@ export default function Home() {
           <p>Upload your first document free. No card. No setup.</p>
           <div className="lp-cta">
             <Link href={primaryHref} className="btn" style={primaryBtnStyle}>
-            <StaggerButton staggerDelay={0.025} duration={0.14} className="text-black text-xl">
+            <StaggerButton staggerDelay={0.025} duration={0.14} className={`${primaryBtnTextClass} text-xl`}>
               {primaryLabel}
             </StaggerButton>
                <ArrowRight />
@@ -419,9 +439,3 @@ const SUPPORTED_DOCS = [
   },
 ];
 
-// White-on-dark CTA used in hero + final CTA.
-const primaryBtnStyle: React.CSSProperties = {
-  background: "#fff",
-  color: "var(--ink-7)",
-  borderColor: "#fff",
-};

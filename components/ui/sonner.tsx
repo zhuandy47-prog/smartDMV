@@ -7,15 +7,23 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+/*
+  The app is light-only — no <ThemeProvider> is mounted, so the previous
+  `useTheme()` fell back to "system" and Sonner rendered the toast in
+  dark mode whenever the user's OS preferred dark. That made the toast
+  dark-on-dark over the hero (invisible) and only became readable once
+  the user scrolled to a white section.
 
+  Force `theme="light"` so the toast is consistently white-with-dark-
+  text everywhere, and use CSS variables that ACTUALLY exist in this
+  stylesheet (no `--popover`; we ship `--bg-raised`, `--fg-1`, etc.).
+*/
+const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,
@@ -26,10 +34,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
+          "--normal-bg": "var(--bg-raised)",
+          "--normal-text": "var(--fg-1)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--border-radius": "var(--r-md)",
         } as React.CSSProperties
       }
       {...props}

@@ -59,30 +59,42 @@ export function Navbar() {
             href="/bankstatement"
             className={isActive("/bankstatement") ? "active" : ""}
           >
-            <StaggerButton staggerDelay={0.03} duration={0.15}>
+            <StaggerButton
+              staggerDelay={0.03}
+              duration={0.15}
+              className="text-inherit"
+            >
                Bank statement
             </StaggerButton>
-           
+
           </Link>
           <Link
             href="/lease-agreement"
             className={isActive("/lease-agreement") ? "active" : ""}
           >
-            <StaggerButton staggerDelay={0.03} duration={0.15}>
+            <StaggerButton
+              staggerDelay={0.03}
+              duration={0.15}
+              className="text-inherit"
+            >
               Lease agreement
             </StaggerButton>
-            
+
           </Link>
           <Link
             href="/utility-bill"
             className={isActive("/utility-bill") ? "active" : ""}
           >
-            <StaggerButton staggerDelay={0.03} duration={0.15}>
+            <StaggerButton
+              staggerDelay={0.03}
+              duration={0.15}
+              className="text-inherit"
+            >
                Utility bill
             </StaggerButton>
-           
+
           </Link>
-        
+
           {isStaff && (
             <>
               <Link
@@ -95,10 +107,14 @@ export function Navbar() {
                     : ""
                 }`}
               >
-                <StaggerButton staggerDelay={0.03} duration={0.15}>
-              Review queue
-            </StaggerButton>
-                
+                <StaggerButton
+                  staggerDelay={0.03}
+                  duration={0.15}
+                  className="text-inherit"
+                >
+                  Review queue
+                </StaggerButton>
+
                 {staffUnreadLabel && (
                   <span
                     className="nav-pill"
@@ -112,19 +128,19 @@ export function Navbar() {
                 href="/dashboard/audit"
                 className={`staff ${isActive("/dashboard/audit") ? "active" : ""}`}
               >
-                <StaggerButton>
-              Audit
-            </StaggerButton>
-                
+                <StaggerButton className="text-inherit">
+                  Audit
+                </StaggerButton>
+
               </Link>
               <Link
                 href="/dashboard/staff"
                 className={`staff ${isActive("/dashboard/staff") ? "active" : ""}`}
               >
-                <StaggerButton>
-              Users
-            </StaggerButton>
-                
+                <StaggerButton className="text-inherit">
+                  Users
+                </StaggerButton>
+
               </Link>
             </>
           )}
@@ -140,7 +156,7 @@ export function Navbar() {
             <StaggerButton>
               Sign in
             </StaggerButton>
-              
+
             </Link>
             <Link
               href="/auth/sign-up"
@@ -154,7 +170,7 @@ export function Navbar() {
               <StaggerButton
                 staggerDelay={0.03}
                 duration={0.15}
-                className="bg-white text-black hover:bg-white"
+                className="bg-white text-black hover:bg-white dark:bg-white dark:text-black dark:hover:bg-white"
               >
                 Get started
               </StaggerButton>

@@ -40,13 +40,13 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        
+
           <ConvexClientProvider>
             <AuthEffects />
             {children}
           </ConvexClientProvider>
           <Toaster closeButton />
-     
+
       </body>
     </html>
   );
