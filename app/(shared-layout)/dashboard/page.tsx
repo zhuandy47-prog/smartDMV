@@ -15,6 +15,7 @@ import {
   FileText,
   LayoutList,
   Loader2,
+  Sparkles,
   TriangleAlert,
   X,
   XCircle,
@@ -86,11 +87,16 @@ function DashboardInner() {
     { initialNumItems: PAGE_SIZE },
   );
 
+  // Sort: docs with unread user replies (red dot) bubble to the top, and
+  // within each group rows are ordered by uploadedAt descending (newest
+  // first). Treats "has unread" as a binary tier instead of sorting by
+  // magnitude — staff reviewing the queue care first that *something* is
+  // waiting on them, then about recency.
   const sorted = [...results].sort((a, b) => {
-    const ua = a.unreadCount ?? 0;
-    const ub = b.unreadCount ?? 0;
-    if (ub !== ua) return ub - ua;
-    return a.uploadedAt - b.uploadedAt;
+    const aHasUnread = (a.unreadCount ?? 0) > 0 ? 1 : 0;
+    const bHasUnread = (b.unreadCount ?? 0) > 0 ? 1 : 0;
+    if (aHasUnread !== bHasUnread) return bHasUnread - aHasUnread;
+    return b.uploadedAt - a.uploadedAt;
   });
 
   const flagged = sorted.filter((d) => (d.unreadCount ?? 0) > 0).length;
@@ -239,7 +245,27 @@ function DashboardInner() {
                           : "Other"}
                       </td>
                       <td>
-                        <StatusChip status={doc.reviewStatus} />
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <StatusChip status={doc.reviewStatus} />
+                          {doc.isAutoDecided &&
+                            doc.reviewStatus &&
+                            doc.reviewStatus !== "pending" && (
+                              <span
+                                className="chip chip-neutral"
+                                title="Decided automatically by automated verification"
+                              >
+                                <Sparkles />
+                                Auto
+                              </span>
+                            )}
+                        </div>
                       </td>
                       <td className="mono">{relativeTime(doc.uploadedAt)}</td>
                       <td className="right">

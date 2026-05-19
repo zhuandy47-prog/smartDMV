@@ -35,9 +35,12 @@ async function freshCommentsOn(
     .take(UNREAD_CAP_PER_DOC);
 }
 
-// Staff dashboard: paginated list of documents, OLDEST first.
-// The dashboard is a review queue — staff should see the longest-waiting
-// submissions at the top so nothing slips through.
+// Staff dashboard: paginated list of documents, NEWEST first.
+// The dashboard re-sorts each page client-side so docs with unread user
+// replies (red dot) bubble to the top, with the remainder ordered by
+// upload time descending. Loading newest-first server-side keeps that
+// client-side sort meaningful — otherwise we'd just be re-ordering the
+// oldest 25 rows.
 //
 // Optional reviewStatus filter uses the `by_review_status` index.
 //
@@ -63,15 +66,21 @@ export const listAll = query({
           .withIndex("by_review_status", (q) =>
             q.eq("reviewStatus", args.reviewStatus!),
           )
-          .order("asc")
+          .order("desc")
           .paginate(args.paginationOpts)
       : await ctx.db
           .query("documents")
-          .order("asc")
+          .order("desc")
           .paginate(args.paginationOpts);
 
-    // Per-doc unread badge (staff perspective): count comments authored
-    // by the doc owner that are newer than the staff-seen timestamp.
+    // Per-doc enrichment:
+    //   - unreadCount: comments authored by the doc owner that are newer
+    //     than the staff-seen timestamp (drives the red "N new" pill).
+    //   - isAutoDecided: true when the *latest* audit log entry on this
+    //     document was written by SYSTEM_ACTOR_ID. Drives the "Auto" badge
+    //     in the queue. If staff later override the AI's decision via
+    //     `changeDecision`, the latest audit entry will be by a staff
+    //     user, so the badge correctly disappears.
     const enriched = await Promise.all(
       page.page.map(async (doc) => {
         const seenAt = doc.staffLastSeenCommentsAt ?? 0;
@@ -85,7 +94,18 @@ export const listAll = query({
             doc.userId !== undefined &&
             c.authorId === doc.userId,
         ).length;
-        return { ...doc, unreadCount };
+
+        // Cheap: index lookup, take the single newest row.
+        const [latestAudit] = await ctx.db
+          .query("auditLog")
+          .withIndex("by_document", (q) => q.eq("documentId", doc._id))
+          .order("desc")
+          .take(1);
+        const isAutoDecided =
+          latestAudit !== undefined &&
+          latestAudit.actorId === SYSTEM_ACTOR_ID;
+
+        return { ...doc, unreadCount, isAutoDecided };
       }),
     );
 
@@ -402,8 +422,10 @@ export const saveAiResult = mutation({
           : {}),
     });
 
-    // Post a system comment so the user sees exactly why their doc was
-    // auto-rejected and what to fix on resubmission.
+    // Write an auditLog entry (so the staff audit page records the
+    // rejection, with "system" as the actor), and post a system comment
+    // so the user sees exactly why their doc was auto-rejected and what
+    // to fix on resubmission.
     if (shouldAutoReject) {
       const issuesBlock =
         args.issues.length > 0
@@ -414,6 +436,17 @@ export const saveAiResult = mutation({
         `(score: ${args.score}/100).\n\n` +
         `${args.summary}${issuesBlock}\n\n` +
         `Please address the issues above and resubmit.`;
+
+      await ctx.db.insert("auditLog", {
+        documentId: id,
+        actorId: SYSTEM_ACTOR_ID,
+        actorName: SYSTEM_ACTOR_NAME,
+        action: "rejected",
+        // Reason on the audit row mirrors the body of the system
+        // comment so the audit page's "reason" column is informative
+        // (score + short summary) without dumping the whole comment.
+        reason: `Score ${args.score}/100 — ${args.summary}`,
+      });
 
       await ctx.db.insert("comments", {
         postId: id,
@@ -506,6 +539,72 @@ export const rejectWithReason = mutation({
       actorId: user._id,
       actorName: user.name ?? "Staff",
       action: "rejected",
+      reason,
+    });
+  },
+});
+
+// Staff: change a previously-resolved document's review status. Lets staff
+// flip approved ↔ rejected or reopen either back to "pending" if a decision
+// was made in error.
+//
+// Always requires a reason — even when the new status is "approved" — so
+// the audit trail explains why a prior decision was overridden. Records the
+// change in the audit log only; nothing is posted to the user's comment
+// thread by this mutation (changes are an internal staff concern).
+//
+// No-ops (and throws) if the document is currently "pending" — callers
+// should use `approve` or `rejectWithReason` for the first decision.
+export const changeDecision = mutation({
+  args: {
+    id: v.id("documents"),
+    newStatus: v.union(
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("pending"),
+    ),
+    reason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireStaff(ctx);
+
+    const reason = args.reason.trim();
+    if (reason.length === 0) {
+      throw new ConvexError("A reason is required to change a decision.");
+    }
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc) throw new ConvexError("Document not found.");
+
+    const currentStatus = doc.reviewStatus ?? "pending";
+    if (currentStatus === "pending") {
+      throw new ConvexError(
+        "This document is still pending — use approve or reject instead.",
+      );
+    }
+    if (currentStatus === args.newStatus) {
+      throw new ConvexError(
+        `Document is already ${args.newStatus}.`,
+      );
+    }
+
+    await ctx.db.patch(args.id, { reviewStatus: args.newStatus });
+
+    // Map the new status to an auditLog action. Reopening to "pending" is
+    // a distinct action so the History card can render it differently from
+    // the original approve/reject events.
+    const action =
+      args.newStatus === "pending"
+        ? ("reopened" as const)
+        : args.newStatus === "approved"
+          ? ("approved" as const)
+          : ("rejected" as const);
+
+    await ctx.db.insert("auditLog", {
+      documentId: args.id,
+      actorId: user._id,
+      actorName: user.name ?? "Staff",
+      action,
       reason,
     });
   },

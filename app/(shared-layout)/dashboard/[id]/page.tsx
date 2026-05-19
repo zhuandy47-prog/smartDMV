@@ -11,6 +11,7 @@ import {
   Check,
   Clock,
   Loader2,
+  RotateCcw,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -68,6 +69,7 @@ function DocumentDetailInner() {
 
   const approve = useMutation(api.documents.approve);
   const rejectWithReason = useMutation(api.documents.rejectWithReason);
+  const changeDecision = useMutation(api.documents.changeDecision);
   const markCommentsSeenAsStaff = useMutation(
     api.documents.markCommentsSeenAsStaff,
   );
@@ -75,6 +77,15 @@ function DocumentDetailInner() {
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [reason, setReason] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  // Post-decision "Change decision" flow. Tracks which target status the
+  // staff member is moving the doc to so we can show the right confirm
+  // button + label and call changeDecision with the right newStatus.
+  const [changeTarget, setChangeTarget] = useState<
+    "approved" | "rejected" | "pending" | null
+  >(null);
+  const [changeReason, setChangeReason] = useState("");
+  const [isChangePending, startChangeTransition] = useTransition();
 
   const seenRef = useRef<string | null>(null);
   useEffect(() => {
@@ -135,6 +146,40 @@ function DocumentDetailInner() {
         setShowRejectForm(false);
       } catch {
         toast.error("Failed to reject.");
+      }
+    });
+  }
+
+  function cancelChange() {
+    setChangeTarget(null);
+    setChangeReason("");
+  }
+
+  function handleChangeDecision() {
+    if (!changeTarget) return;
+    if (changeReason.trim().length === 0) {
+      toast.error("Please enter a reason for the change.");
+      return;
+    }
+    const target = changeTarget;
+    startChangeTransition(async () => {
+      try {
+        await changeDecision({
+          id: docId,
+          newStatus: target,
+          reason: changeReason,
+        });
+        const successMsg =
+          target === "pending"
+            ? "Decision reopened. Document is back in the pending queue."
+            : target === "approved"
+              ? "Decision changed to approved."
+              : "Decision changed to rejected.";
+        toast.success(successMsg);
+        setChangeReason("");
+        setChangeTarget(null);
+      } catch {
+        toast.error("Failed to change decision.");
       }
     });
   }
@@ -347,6 +392,128 @@ function DocumentDetailInner() {
                 >
                   The submitter is notified by email. Internal notes stay
                   private.
+                </p>
+              </div>
+            )}
+
+            {isResolved && (
+              <div className="side-card">
+                <h3>Change decision</h3>
+                {!changeTarget ? (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--fg-3)",
+                        marginBottom: 10,
+                      }}
+                    >
+                      This document is currently{" "}
+                      <strong>{reviewStatus}</strong>. You can override the
+                      previous decision below.
+                    </p>
+                    <div className="review-actions">
+                      {reviewStatus !== "approved" && (
+                        <button
+                          className="btn btn-success"
+                          onClick={() => setChangeTarget("approved")}
+                          disabled={isChangePending}
+                        >
+                          <Check />
+                          Change to Approved
+                        </button>
+                      )}
+                      {reviewStatus !== "rejected" && (
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => setChangeTarget("rejected")}
+                          disabled={isChangePending}
+                        >
+                          <X />
+                          Change to Rejected
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => setChangeTarget("pending")}
+                        disabled={isChangePending}
+                      >
+                        <RotateCcw />
+                        Reopen as Pending
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--fg-3)",
+                        marginBottom: 8,
+                      }}
+                    >
+                      {changeTarget === "pending"
+                        ? "Reopen to pending — explain why this needs re-review."
+                        : changeTarget === "approved"
+                          ? "Approve this document — explain why the prior decision is being overturned."
+                          : "Reject this document — explain why the prior decision is being overturned."}
+                    </p>
+                    <textarea
+                      value={changeReason}
+                      onChange={(e) => setChangeReason(e.target.value)}
+                      placeholder="Reason for change (required)…"
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        marginTop: 10,
+                      }}
+                    >
+                      <button
+                        className={
+                          changeTarget === "approved"
+                            ? "btn btn-success btn-sm"
+                            : changeTarget === "rejected"
+                              ? "btn btn-danger btn-sm"
+                              : "btn btn-secondary btn-sm"
+                        }
+                        onClick={handleChangeDecision}
+                        disabled={
+                          isChangePending ||
+                          changeReason.trim().length === 0
+                        }
+                      >
+                        {isChangePending ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : changeTarget === "pending" ? (
+                          "Confirm reopen"
+                        ) : changeTarget === "approved" ? (
+                          "Confirm approve"
+                        ) : (
+                          "Confirm reject"
+                        )}
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={cancelChange}
+                        disabled={isChangePending}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )}
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "var(--fg-4)",
+                    marginTop: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Decision changes are recorded in this document’s history
+                  with the reason you provide.
                 </p>
               </div>
             )}

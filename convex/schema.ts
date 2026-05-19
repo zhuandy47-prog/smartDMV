@@ -61,14 +61,23 @@ export default defineSchema({
   }).index("by_post", ["postId"]),
 
   // Audit trail of staff actions on documents.
-  // - action: "approved" | "rejected"
-  // - reason: only set on rejections (mirrored from the rejection comment)
+  // - action:
+  //     "approved"  → reviewStatus set to "approved"
+  //     "rejected"  → reviewStatus set to "rejected"
+  //     "reopened"  → reviewStatus reverted to "pending" by staff
+  // - reason: set on rejections (mirrored from the rejection comment) and on
+  //   any post-decision change (changing a previous decision always requires
+  //   a reason so the audit trail explains why).
   // _creationTime is the timestamp.
   auditLog: defineTable({
     documentId: v.id("documents"),
     actorId: v.string(),
     actorName: v.string(),
-    action: v.union(v.literal("approved"), v.literal("rejected")),
+    action: v.union(
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("reopened"),
+    ),
     reason: v.optional(v.string()),
   })
     .index("by_document", ["documentId"])

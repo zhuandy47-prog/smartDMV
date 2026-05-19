@@ -3,7 +3,7 @@
 import { api } from "@/convex/_generated/api";
 import { StaffGuard } from "@/components/web/StaffGuard";
 import { usePaginatedQuery } from "convex/react";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Clock, Loader2, X } from "lucide-react";
 import Link from "next/link";
 
 const PAGE_SIZE = 50;
@@ -30,7 +30,8 @@ function AuditLogInner() {
           <div>
             <h1>Audit log</h1>
             <p className="sub">
-              Every approval and rejection, in reverse-chronological order.
+              Every approval, rejection, and reopen, in
+              reverse-chronological order.
             </p>
           </div>
         </div>
@@ -77,10 +78,15 @@ function AuditLogInner() {
                           <Check />
                           Approved
                         </span>
-                      ) : (
+                      ) : entry.action === "rejected" ? (
                         <span className="chip chip-err">
                           <X />
                           Rejected
+                        </span>
+                      ) : (
+                        <span className="chip chip-warn">
+                          <Clock />
+                          Reopened
                         </span>
                       )}
                     </td>
